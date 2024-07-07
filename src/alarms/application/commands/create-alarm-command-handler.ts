@@ -21,7 +21,8 @@ export class CreateAlarmCommandHandler
       command.triggeredAt,
       command.items,
     );
-    this.eventPublisher.mergeObjectContext(alarm).commit();
+    this.eventPublisher.mergeObjectContext(alarm);
+    alarm.commit();
     return alarm;
   }
 }
