@@ -5,11 +5,11 @@
  *
  * @template T - The type of the object to be transformed into a serializable format.
  */
-export type SerializeblePayload<T> = T extends object
+export type SerializablePayload<T> = T extends object
   ? {
       [K in keyof T]: T[K] extends { toJSON(): infer U }
         ? U
-        : SerializeblePayload<T[K]>;
+        : SerializablePayload<T[K]>;
     }
   : T;
 
@@ -17,9 +17,9 @@ export type SerializeblePayload<T> = T extends object
  * Serialize event that can be store in the event store
  * @template T - The type of the data of the event.
  */
-export interface SerializebleEvent<T = any> {
+export interface SerializableEvent<T = any> {
   streamId: string;
   type: string;
   position: number;
-  data: SerializeblePayload<T>;
+  data: SerializablePayload<T>;
 }

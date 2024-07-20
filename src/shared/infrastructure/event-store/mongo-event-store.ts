@@ -3,19 +3,22 @@ import { InjectModel } from '@nestjs/mongoose';
 import { EVENT_STORE_CONNECTION } from '../../../core/core.constants';
 import { Model } from 'mongoose';
 import { Event } from './schemas/event.schema';
-import { SerializebleEvent } from '../../domain/interfaces/serializeble-event';
+import { SerializableEvent } from '../../domain/interfaces/serializable-event';
+import { EventDeserializer } from './deserializers/event.deserializer';
+import { EventStore } from '../../application/ports/event-store';
 
 @Injectable()
-export class MongoEventStore {
+export class MongoEventStore implements EventStore {
   private logger = new Logger(MongoEventStore.name);
 
   constructor(
     @InjectModel(Event.name, EVENT_STORE_CONNECTION)
     private readonly eventStore: Model<Event>,
+    private readonly eventDeserializer: EventDeserializer,
   ) {}
 
   async persist(
-    eventOrEvents: SerializebleEvent | SerializebleEvent[],
+    eventOrEvents: SerializableEvent | SerializableEvent[],
   ): Promise<void> {
     const events = Array.isArray(eventOrEvents)
       ? eventOrEvents
@@ -39,5 +42,18 @@ export class MongoEventStore {
     } finally {
       await session.endSession();
     }
+  }
+
+  async getEventsByStreamId(streamId: string): Promise<SerializableEvent[]> {
+    const events = await this.eventStore
+      .find({ streamId })
+      .sort({ position: 1 });
+
+    if (events.length === 0) {
+      throw new Error(`No events found for streamId: ${streamId}`);
+    }
+    return events.map((event) =>
+      this.eventDeserializer.deserialize(event.toJSON()),
+    );
   }
 }

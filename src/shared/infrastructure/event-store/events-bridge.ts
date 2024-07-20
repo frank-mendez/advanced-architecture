@@ -19,7 +19,6 @@ export class EventsBridge
     private readonly eventDeserializer: EventDeserializer,
   ) {}
   async onApplicationBootstrap() {
-    // @ts-ignore
     this.changeStream = this.eventStore
       .watch()
       .on('change', (change: ChangeStreamInsertDocument<EventDocument>) => {
